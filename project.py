@@ -1,3 +1,4 @@
+#smart study planner python code
 subjects = []
 study_time = []
 
@@ -20,3 +21,4 @@ for i in range(4):
 print("\n--- STUDY PLAN ---")
 for i in range(len(subjects)):
     print(subjects[i]} "->" study_time[i], "hours/day")
+#end of the code
