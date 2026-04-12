@@ -2,7 +2,7 @@ subjects = []
 study_time = []
 
 for i in range(3):
-    sub = input(f"Enter ({i+1}/3) subject name: ")
+    sub = input("Enter subject name: ")
     diff = int(input("Enter difficulty (0-10): "))
 
     if 0 <= diff <= 4:
@@ -18,5 +18,5 @@ for i in range(3):
     study_time.append(hours)
 
 print("\n--- STUDY PLAN ---")
-for i in range(3):
-    print(f"{subjects[i]} -> {study_time[i]} hours/day")
+for i in range(len(subjects)):
+    print(subjects[i]} "->" study_time[i], "hours/day")
