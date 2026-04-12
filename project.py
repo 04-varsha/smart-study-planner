@@ -1,7 +1,7 @@
 subjects = []
 study_time = []
 
-for i in range(3):
+for i in range(4):
     sub = input("Enter subject name: ")
     diff = int(input("Enter difficulty (0-10): "))
 
