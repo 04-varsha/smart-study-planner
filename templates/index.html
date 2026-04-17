@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Study Planner</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            margin-top: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #007bff;
+        }
+
+        .tasks, .schedule {
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: #f4f4f4;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .generate-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            text-align: center;
+            background: #28a745;
+        }
+
+        .generate-btn:hover {
+            background: #218838;
+        }
+
+        /* ✅ Better checkbox look */
+        input[type="checkbox"] {
+            transform: scale(1.3);
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>📚 Smart Study Planner</h1>
+
+    <form action="/add" method="POST">
+        <input type="text" name="name" placeholder="Enter Subject" required>
+        <input type="number" name="hours" placeholder="Hours" required>
+        <input type="number" name="priority" placeholder="Priority (1-5)" required>
+        <button type="submit">Add</button>
+    </form>
+
+    <div class="tasks">
+        <h2>📌 Your Tasks</h2>
+        <ul>
+            {% for task in tasks %}
+                <li>
+                    <form action="/complete" method="POST" class="task-item">
+
+                        <!-- ✅ TEXT FIRST (LEFT SIDE) -->
+                        <span>
+                            <b>{{ task[1] }}</b> — {{ task[2] }} hrs | Priority: {{ task[3] }}
+                        </span>
+
+                        <!-- ✅ CHECKBOX (RIGHT SIDE) -->
+                        <input type="checkbox" name="task_id" value="{{ task[0] }}"
+                            onchange="this.form.submit()">
+
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <a href="/schedule">
+        <button class="generate-btn">Generate Schedule</button>
+    </a>
+
+    {% if schedule %}
+    <div class="schedule">
+        <h2>⏱ Generated Schedule</h2>
+        <ul>
+            {% for s in schedule %}
+                <li>{{ s }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+</div>
+</body>
+</html>
