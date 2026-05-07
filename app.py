@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from PyPDF2 import PdfReader
 import random
+import sqlite3
 
 app = Flask(__name__)
 
@@ -51,6 +52,18 @@ def add_task():
             "hours": hours
         })
 
+        # SAVE TO DATABASE
+
+        conn = sqlite3.connect("database.db")
+
+        conn.execute(
+            "INSERT INTO tasks(name, marks, hours, completed) VALUES (?, ?, ?, ?)",
+            (subject, marks, hours, 0)
+        )
+
+        conn.commit()
+        conn.close()
+
     # AUTO TIMETABLE
 
     for day in range(1, days + 1):
@@ -59,13 +72,13 @@ def add_task():
 
             "day": f"Day {day}",
 
-            "s1": subjects[0]["name"],
+            "s1": f"{subjects[0]['name']} - {subjects[0]['hours']} hrs",
 
-            "s2": subjects[1]["name"],
+            "s2": f"{subjects[1]['name']} - {subjects[1]['hours']} hrs",
 
-            "s3": subjects[2]["name"],
+            "s3": f"{subjects[2]['name']} - {subjects[2]['hours']} hrs",
 
-            "s4": subjects[3]["name"]
+            "s4": f"{subjects[3]['name']} - {subjects[3]['hours']} hrs"
 
         })
 
@@ -90,6 +103,8 @@ def upload_pdf():
 
     text = ""
 
+    # EXTRACT TEXT FROM PDF
+
     for page in reader.pages:
 
         extracted = page.extract_text()
@@ -97,9 +112,35 @@ def upload_pdf():
         if extracted:
             text += extracted
 
+    # SPLIT INTO SENTENCES
+
     lines = text.split(".")
 
     questions = []
+
+    # ---------------- CREATE WORD POOL ----------------
+
+    all_words = []
+
+    for line in lines:
+
+        words = line.strip().split()
+
+        for word in words:
+
+            clean_word = word.strip(",.!?()[]{}").capitalize()
+
+            # KEEP ONLY VALID WORDS
+
+            if len(clean_word) > 3 and clean_word.isalpha():
+
+                all_words.append(clean_word)
+
+    # REMOVE DUPLICATES
+
+    all_words = list(set(all_words))
+
+    # ---------------- GENERATE QUESTIONS ----------------
 
     for line in lines[:20]:
 
@@ -107,28 +148,42 @@ def upload_pdf():
 
         if len(words) > 6:
 
-            answer = words[0]
+            # CHOOSE ANSWER
 
-            question = line.replace(answer, "_____")
+            answer = words[0].strip(",.!?()[]{}").capitalize()
 
-            options = [
-                answer,
-                "Computer",
-                "Database",
-                "Network"
+            # CREATE QUESTION
+
+            question = line.replace(words[0], "___")
+
+            # GENERATE WRONG OPTIONS FROM PDF WORDS
+
+            available_words = [
+                w for w in all_words if w != answer
             ]
 
-            random.shuffle(options)
+            # ENSURE ENOUGH OPTIONS EXIST
 
-            questions.append({
+            if len(available_words) >= 3:
 
-                "question": question,
+                wrong_options = random.sample(
+                    available_words,
+                    3
+                )
 
-                "options": options,
+                options = wrong_options + [answer]
 
-                "answer": answer
+                random.shuffle(options)
 
-            })
+                questions.append({
+
+                    "question": question,
+
+                    "options": options,
+
+                    "answer": answer
+
+                })
 
     return render_template(
 
@@ -142,5 +197,5 @@ def upload_pdf():
 
 # ---------------- RUN APP ----------------
 
-if __name__ == "__main__":
+if (__name__) == "__main__":
     app.run(debug=True)
