@@ -1,17 +1,22 @@
 import sqlite3
 
-conn = sqlite3.connect('database.db')
+conn = sqlite3.connect("database.db")
 
-conn.execute('''
-CREATE TABLE tasks (
+# DELETE OLD TABLE
+conn.execute("DROP TABLE IF EXISTS tasks")
+
+# CREATE NEW TABLE
+conn.execute("""
+CREATE TABLE tasks(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
+    marks INTEGER,
     hours INTEGER,
-    priority INTEGER,
-    completed INTEGER DEFAULT 0
+    completed INTEGER
 )
-''')
+""")
 
+conn.commit()
 conn.close()
 
-print("Database created successfully!")
+print("Database recreated successfully")

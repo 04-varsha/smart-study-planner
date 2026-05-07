@@ -1,53 +1,146 @@
-from flask import Flask, render_template, request, redirect
-from planner import generate_schedule
-import sqlite3
+from flask import Flask, render_template, request
+from PyPDF2 import PdfReader
+import random
 
 app = Flask(__name__)
 
-def get_db():
-    return sqlite3.connect('database.db')
+# ---------------- HOME ----------------
 
-@app.route('/')
+@app.route("/")
 def index():
-    conn = get_db()
-    tasks = conn.execute("SELECT * FROM tasks WHERE completed = 0").fetchall()
-    conn.close()
-    return render_template('index.html', tasks=tasks)
 
-@app.route('/add', methods=['POST'])
+    return render_template(
+        "index.html",
+        timetable=None,
+        questions=None
+    )
+
+# ---------------- TIMETABLE GENERATION ----------------
+
+@app.route("/add", methods=["POST"])
 def add_task():
-    name = request.form['name']
-    hours = int(request.form['hours'])
-    priority = int(request.form['priority'])
 
-    conn = get_db()
-    conn.execute("INSERT INTO tasks (name, hours, priority, completed) VALUES (?, ?, ?, 0)",
-                 (name, hours, priority))
-    conn.commit()
-    conn.close()
+    timetable = []
 
-    return redirect('/')
+    days = int(request.form["days"])
 
-# ✅ Mark task as completed
-@app.route('/complete', methods=['POST'])
-def complete_task():
-    task_id = request.form['task_id']
+    subjects = []
 
-    conn = get_db()
-    conn.execute("UPDATE tasks SET completed = 1 WHERE id = ?", (task_id,))
-    conn.commit()
-    conn.close()
+    for i in range(1, 5):
 
-    return redirect('/')
+        subject = request.form[f"subject{i}"]
 
-@app.route('/schedule')
-def schedule():
-    conn = get_db()
-    tasks = conn.execute("SELECT name, hours, priority FROM tasks WHERE completed = 0").fetchall()
-    conn.close()
+        marks = int(request.form[f"marks{i}"])
 
-    schedule = generate_schedule(tasks)
-    return render_template('index.html', schedule=schedule, tasks=tasks)
+        # AUTO STUDY HOURS BASED ON MARKS
 
-if __name__ == '__main__':
+        if marks >= 85:
+            hours = 1
+
+        elif marks >= 70:
+            hours = 2
+
+        elif marks >= 50:
+            hours = 3
+
+        else:
+            hours = 4
+
+        subjects.append({
+            "name": subject,
+            "hours": hours
+        })
+
+    # AUTO TIMETABLE
+
+    for day in range(1, days + 1):
+
+        timetable.append({
+
+            "day": f"Day {day}",
+
+            "s1": subjects[0]["name"],
+
+            "s2": subjects[1]["name"],
+
+            "s3": subjects[2]["name"],
+
+            "s4": subjects[3]["name"]
+
+        })
+
+    return render_template(
+
+        "index.html",
+
+        timetable=timetable,
+
+        questions=None
+
+    )
+
+# ---------------- PDF QUIZ GENERATOR ----------------
+
+@app.route("/upload_pdf", methods=["POST"])
+def upload_pdf():
+
+    file = request.files["pdf"]
+
+    reader = PdfReader(file)
+
+    text = ""
+
+    for page in reader.pages:
+
+        extracted = page.extract_text()
+
+        if extracted:
+            text += extracted
+
+    lines = text.split(".")
+
+    questions = []
+
+    for line in lines[:20]:
+
+        words = line.strip().split()
+
+        if len(words) > 6:
+
+            answer = words[0]
+
+            question = line.replace(answer, "_____")
+
+            options = [
+                answer,
+                "Computer",
+                "Database",
+                "Network"
+            ]
+
+            random.shuffle(options)
+
+            questions.append({
+
+                "question": question,
+
+                "options": options,
+
+                "answer": answer
+
+            })
+
+    return render_template(
+
+        "index.html",
+
+        timetable=None,
+
+        questions=questions
+
+    )
+
+# ---------------- RUN APP ----------------
+
+if __name__ == "__main__":
     app.run(debug=True)
